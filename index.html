@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>National Weather Alert Banner</title>
+
+<style>
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+    background:#111;
+    font-family:Arial,Helvetica,sans-serif;
+}
+
+/* ==========================
+   MAIN ALERT BANNER
+========================== */
+
+#alertBanner{
+    width:100%;
+    min-height:120px;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    text-align:center;
+    padding:15px;
+    transition:all .5s ease;
+    color:white;
+}
+
+.banner-content{
+    width:100%;
+    max-width:1400px;
+}
+
+.alert-title{
+    font-size:clamp(22px,4vw,42px);
+    font-weight:900;
+    text-transform:uppercase;
+    letter-spacing:1px;
+}
+
+.alert-count{
+    margin-top:5px;
+    font-size:clamp(12px,1.5vw,18px);
+    font-weight:bold;
+}
+
+.alert-area{
+    margin-top:8px;
+    font-size:clamp(13px,1.7vw,20px);
+}
+
+.alert-time{
+    margin-top:6px;
+    font-size:clamp(11px,1.2vw,16px);
+    opacity:.95;
+}
+
+/* ==========================
+   COLORS
+========================== */
+
+.gray{
+    background:#555;
+}
+
+.tornado{
+    background:#c00000;
+    animation:pulseRed 1.4s infinite;
+}
+
+.severe{
+    background:#FFD400;
+    color:black;
+}
+
+.flood{
+    background:#008C45;
+}
+
+.hurricane{
+    background:#6A00FF;
+}
+
+.winter{
+    background:#0077ff;
+}
+
+.heat{
+    background:#ff6600;
+}
+
+.other{
+    background:#4444aa;
+}
+
+@keyframes pulseRed{
+
+    0%{
+        box-shadow:0 0 10px #ff0000;
+    }
+
+    50%{
+        box-shadow:0 0 40px #ff0000;
+    }
+
+    100%{
+        box-shadow:0 0 10px #ff0000;
+    }
+
+}
+
+/* ==========================
+   ALERT TICKER
+========================== */
+
+#alertTicker{
+    width:100%;
+    height:36px;
+    background:#000;
+    overflow:hidden;
+    display:flex;
+    align-items:center;
+    border-top:2px solid rgba(255,255,255,.15);
+    border-bottom:2px solid rgba(255,255,255,.15);
+}
+
+#tickerText{
+    color:white;
+    white-space:nowrap;
+    font-size:15px;
+    font-weight:700;
+    padding-left:100%;
+    animation:tickerScroll 90s linear infinite;
+}
+
+@keyframes tickerScroll{
+
+    0%{
+        transform:translateX(0);
+    }
+
+    100%{
+        transform:translateX(-100%);
+    }
+
+}
+
+/* ==========================
+   MOBILE
+========================== */
+
+@media(max-width:768px){
+
+    #alertBanner{
+        min-height:90px;
+        padding:10px;
+    }
+
+    .alert-area{
+        display:none;
+    }
+
+    #alertTicker{
+        height:30px;
+    }
+
+    #tickerText{
+        font-size:12px;
+    }
+
+}
+
+</style>
+</head>
+
+<body>
+
+<!-- MAIN BANNER -->
+
+<div id="alertBanner" class="gray">
+
+    <div class="banner-content">
+
+        <div class="alert-title">
+            Loading Active Alerts...
+        </div>
+
+        <div class="alert-count"></div>
+
+        <div class="alert-area"></div>
+
+        <div class="alert-time"></div>
+
+    </div>
+
+</div>
+
+<!-- SCROLLING TICKER -->
+
+<div id="alertTicker">
+    <div id="tickerText">
+        Loading active NWS alerts...
+    </div>
+</div>
+
+<script>
+
+const ALERT_API =
+'https://api.weather.gov/alerts/active';
+
+let alerts = [];
+let currentAlert = 0;
+
+const banner =
+document.getElementById('alertBanner');
+
+const title =
+document.querySelector('.alert-title');
+
+const count =
+document.querySelector('.alert-count');
+
+const area =
+document.querySelector('.alert-area');
+
+const time =
+document.querySelector('.alert-time');
+
+const ticker =
+document.getElementById('tickerText');
+
+/* ==========================
+   PRIORITY LIST
+========================== */
+
+const PRIORITY = {
+
+"Tornado Emergency":100,
+"Tornado Warning":95,
+
+"Flash Flood Emergency":90,
+"Flash Flood Warning":85,
+
+"Severe Thunderstorm Warning":80,
+
+"Hurricane Warning":75,
+"Hurricane Watch":70,
+
+"Blizzard Warning":65,
+"Ice Storm Warning":60
+
+};
+
+/* ==========================
+   ALERT COLOR LOGIC
+========================== */
+
+function getAlertClass(event){
+
+event = event.toLowerCase();
+
+if(event.includes('tornado'))
+return 'tornado';
+
+if(event.includes('severe thunderstorm'))
+return 'severe';
+
+if(
+event.includes('flood') ||
+event.includes('flash flood')
+)
+return 'flood';
+
+if(
+event.includes('hurricane') ||
+event.includes('tropical storm')
+)
+return 'hurricane';
+
+if(
+event.includes('winter') ||
+event.includes('snow') ||
+event.includes('ice') ||
+event.includes('blizzard')
+)
+return 'winter';
+
+if(
+event.includes('heat')
+)
+return 'heat';
+
+return 'other';
+
+}
+
+/* ==========================
+   DISPLAY ALERT
+========================== */
+
+function displayAlert(alert){
+
+const props =
+alert.properties;
+
+banner.className =
+getAlertClass(props.event);
+
+title.textContent =
+props.event;
+
+count.textContent =
+`${alerts.length.toLocaleString()} Active NWS Alerts Nationwide`;
+
+area.textContent =
+props.areaDesc || '';
+
+time.textContent =
+props.expires
+?
+`Expires: ${new Date(props.expires).toLocaleString()}`
+:
+'';
+
+}
+
+/* ==========================
+   TICKER
+========================== */
+
+function updateTicker(){
+
+if(alerts.length===0){
+
+ticker.textContent =
+'NO ACTIVE ALERTS AT THIS TIME';
+
+return;
+
+}
+
+ticker.textContent =
+alerts.map(alert => {
+
+const p =
+alert.properties;
+
+return `${p.event} — ${p.areaDesc}`;
+
+}).join('   •   ');
+
+}
+
+/* ==========================
+   NO ALERTS
+========================== */
+
+function showNoAlerts(){
+
+banner.className =
+'gray';
+
+title.textContent =
+'NO ACTIVE ALERTS AT THIS TIME';
+
+count.textContent =
+'';
+
+area.textContent =
+'';
+
+time.textContent =
+'';
+
+updateTicker();
+
+}
+
+/* ==========================
+   FETCH ALERTS
+========================== */
+
+async function loadAlerts(){
+
+try{
+
+const response =
+await fetch(ALERT_API,{
+headers:{
+'Accept':'application/geo+json'
+}
+});
+
+const data =
+await response.json();
+
+alerts =
+data.features || [];
+
+if(alerts.length===0){
+
+showNoAlerts();
+return;
+
+}
+
+alerts.sort((a,b)=>{
+
+const aPriority =
+PRIORITY[a.properties.event] || 10;
+
+const bPriority =
+PRIORITY[b.properties.event] || 10;
+
+return bPriority-aPriority;
+
+});
+
+currentAlert = 0;
+
+displayAlert(
+alerts[currentAlert]
+);
+
+updateTicker();
+
+}
+catch(error){
+
+console.error(error);
+
+showNoAlerts();
+
+}
+
+}
+
+/* ==========================
+   ROTATE ALERTS
+========================== */
+
+setInterval(()=>{
+
+if(alerts.length>1){
+
+currentAlert++;
+
+if(
+currentAlert >= alerts.length
+){
+currentAlert = 0;
+}
+
+displayAlert(
+alerts[currentAlert]
+);
+
+}
+
+},10000);
+
+/* ==========================
+   INITIAL LOAD
+========================== */
+
+loadAlerts();
+
+/* ==========================
+   REFRESH DATA
+========================== */
+
+setInterval(
+loadAlerts,
+60000
+);
+
+</script>
+
+</body>
+</html>
