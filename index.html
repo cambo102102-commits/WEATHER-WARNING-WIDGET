@@ -19,9 +19,7 @@ body{
     font-family:Arial,Helvetica,sans-serif;
 }
 
-/* ==========================
-   MAIN ALERT BANNER
-========================== */
+/* MAIN ALERT BANNER */
 
 #alertBanner{
     width:100%;
@@ -33,11 +31,13 @@ body{
     padding:15px;
     transition:all .5s ease;
     color:white;
+    position:relative;
 }
 
 .banner-content{
     width:100%;
     max-width:1400px;
+    padding:0 55px;
 }
 
 .alert-title{
@@ -64,46 +64,43 @@ body{
     opacity:.95;
 }
 
-/* ==========================
-   COLORS
-========================== */
+/* COLORS WITH TRANSPARENCY */
 
 .gray{
-    background:#555;
+    background:rgba(85,85,85,.78);
 }
 
 .tornado{
-    background:#c00000;
+    background:rgba(192,0,0,.82);
     animation:pulseRed 1.4s infinite;
 }
 
 .severe{
-    background:#FFD400;
+    background:rgba(255,212,0,.82);
     color:black;
 }
 
 .flood{
-    background:#008C45;
+    background:rgba(0,140,69,.82);
 }
 
 .hurricane{
-    background:#6A00FF;
+    background:rgba(106,0,255,.82);
 }
 
 .winter{
-    background:#0077ff;
+    background:rgba(0,119,255,.82);
 }
 
 .heat{
-    background:#ff6600;
+    background:rgba(255,102,0,.82);
 }
 
 .other{
-    background:#4444aa;
+    background:rgba(68,68,170,.82);
 }
 
 @keyframes pulseRed{
-
     0%{
         box-shadow:0 0 10px #ff0000;
     }
@@ -115,66 +112,60 @@ body{
     100%{
         box-shadow:0 0 10px #ff0000;
     }
-
 }
 
-/* ==========================
-   ALERT TICKER
-========================== */
+/* MANUAL BUTTONS */
 
-#alertTicker{
-    width:100%;
-    height:36px;
-    background:#000;
-    overflow:hidden;
-    display:flex;
-    align-items:center;
-    border-top:2px solid rgba(255,255,255,.15);
-    border-bottom:2px solid rgba(255,255,255,.15);
-}
-
-#tickerText{
+.alert-btn{
+    position:absolute;
+    top:50%;
+    transform:translateY(-50%);
+    width:42px;
+    height:42px;
+    border:none;
+    border-radius:50%;
+    background:rgba(0,0,0,.35);
     color:white;
-    white-space:nowrap;
-    font-size:15px;
-    font-weight:700;
-    padding-left:100%;
-    animation:tickerScroll 90s linear infinite;
+    font-size:26px;
+    font-weight:bold;
+    cursor:pointer;
+    transition:.25s ease;
+    z-index:10;
 }
 
-@keyframes tickerScroll{
-
-    0%{
-        transform:translateX(0);
-    }
-
-    100%{
-        transform:translateX(-100%);
-    }
-
+.alert-btn:hover{
+    background:rgba(0,0,0,.65);
 }
 
-/* ==========================
-   MOBILE
-========================== */
+#prevAlert{
+    left:12px;
+}
+
+#nextAlert{
+    right:12px;
+}
+
+/* MOBILE */
 
 @media(max-width:768px){
 
     #alertBanner{
-        min-height:90px;
+        min-height:95px;
         padding:10px;
+    }
+
+    .banner-content{
+        padding:0 42px;
     }
 
     .alert-area{
         display:none;
     }
 
-    #alertTicker{
-        height:30px;
-    }
-
-    #tickerText{
-        font-size:12px;
+    .alert-btn{
+        width:34px;
+        height:34px;
+        font-size:22px;
     }
 
 }
@@ -184,9 +175,9 @@ body{
 
 <body>
 
-<!-- MAIN BANNER -->
-
 <div id="alertBanner" class="gray">
+
+    <button id="prevAlert" class="alert-btn">‹</button>
 
     <div class="banner-content">
 
@@ -202,14 +193,8 @@ body{
 
     </div>
 
-</div>
+    <button id="nextAlert" class="alert-btn">›</button>
 
-<!-- SCROLLING TICKER -->
-
-<div id="alertTicker">
-    <div id="tickerText">
-        Loading active NWS alerts...
-    </div>
 </div>
 
 <script>
@@ -235,12 +220,11 @@ document.querySelector('.alert-area');
 const time =
 document.querySelector('.alert-time');
 
-const ticker =
-document.getElementById('tickerText');
+const prevButton =
+document.getElementById('prevAlert');
 
-/* ==========================
-   PRIORITY LIST
-========================== */
+const nextButton =
+document.getElementById('nextAlert');
 
 const PRIORITY = {
 
@@ -259,10 +243,6 @@ const PRIORITY = {
 "Ice Storm Warning":60
 
 };
-
-/* ==========================
-   ALERT COLOR LOGIC
-========================== */
 
 function getAlertClass(event){
 
@@ -294,18 +274,12 @@ event.includes('blizzard')
 )
 return 'winter';
 
-if(
-event.includes('heat')
-)
+if(event.includes('heat'))
 return 'heat';
 
 return 'other';
 
 }
-
-/* ==========================
-   DISPLAY ALERT
-========================== */
 
 function displayAlert(alert){
 
@@ -319,7 +293,7 @@ title.textContent =
 props.event;
 
 count.textContent =
-`${alerts.length.toLocaleString()} Active NWS Alerts Nationwide`;
+`${currentAlert + 1} of ${alerts.length.toLocaleString()} Active NWS Alerts Nationwide`;
 
 area.textContent =
 props.areaDesc || '';
@@ -332,37 +306,6 @@ props.expires
 '';
 
 }
-
-/* ==========================
-   TICKER
-========================== */
-
-function updateTicker(){
-
-if(alerts.length===0){
-
-ticker.textContent =
-'NO ACTIVE ALERTS AT THIS TIME';
-
-return;
-
-}
-
-ticker.textContent =
-alerts.map(alert => {
-
-const p =
-alert.properties;
-
-return `${p.event} — ${p.areaDesc}`;
-
-}).join('   •   ');
-
-}
-
-/* ==========================
-   NO ALERTS
-========================== */
 
 function showNoAlerts(){
 
@@ -381,13 +324,13 @@ area.textContent =
 time.textContent =
 '';
 
-updateTicker();
+prevButton.style.display =
+'none';
+
+nextButton.style.display =
+'none';
 
 }
-
-/* ==========================
-   FETCH ALERTS
-========================== */
 
 async function loadAlerts(){
 
@@ -427,11 +370,15 @@ return bPriority-aPriority;
 
 currentAlert = 0;
 
+prevButton.style.display =
+'block';
+
+nextButton.style.display =
+'block';
+
 displayAlert(
 alerts[currentAlert]
 );
-
-updateTicker();
 
 }
 catch(error){
@@ -444,19 +391,13 @@ showNoAlerts();
 
 }
 
-/* ==========================
-   ROTATE ALERTS
-========================== */
+function nextAlert(){
 
-setInterval(()=>{
-
-if(alerts.length>1){
+if(alerts.length > 1){
 
 currentAlert++;
 
-if(
-currentAlert >= alerts.length
-){
+if(currentAlert >= alerts.length){
 currentAlert = 0;
 }
 
@@ -466,17 +407,42 @@ alerts[currentAlert]
 
 }
 
-},10000);
+}
 
-/* ==========================
-   INITIAL LOAD
-========================== */
+function previousAlert(){
+
+if(alerts.length > 1){
+
+currentAlert--;
+
+if(currentAlert < 0){
+currentAlert = alerts.length - 1;
+}
+
+displayAlert(
+alerts[currentAlert]
+);
+
+}
+
+}
+
+nextButton.addEventListener(
+'click',
+nextAlert
+);
+
+prevButton.addEventListener(
+'click',
+previousAlert
+);
+
+setInterval(
+nextAlert,
+10000
+);
 
 loadAlerts();
-
-/* ==========================
-   REFRESH DATA
-========================== */
 
 setInterval(
 loadAlerts,
